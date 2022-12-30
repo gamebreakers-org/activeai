@@ -2,7 +2,7 @@
 
 require_relative "activeai/version"
 
-module Activeai
+module ActiveAI
   class Error < StandardError; end
   # Your code goes here...
 end

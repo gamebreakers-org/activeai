@@ -3,8 +3,8 @@ class ActiveAI::Behavior::LLM < ActiveAI::Behavior::Base
     @llm = llm
   end
   
-  def complete(prompt)
-    @llm.complete(prompt: prompt)
+  def complete(prompt, stop: nil)
+    @llm.complete(prompt: prompt, stop: stop)
   end
 
   SEPARATOR = "\n\n###\n\n"
@@ -24,5 +24,6 @@ class ActiveAI::Behavior::LLM < ActiveAI::Behavior::Base
   end
 end
 
+require_relative "llm/conversation"
 require_relative "llm/unstructured"
 require_relative "llm/follow_structured_examples"

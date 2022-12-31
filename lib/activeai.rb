@@ -12,7 +12,7 @@ module ActiveAI
   
   def self.config
     {
-      gpt3_token: ENV['GPT3_TOKEN']
+      gpt3_token: ENV['OPEN_AI_TOKEN']
     }
   end
 

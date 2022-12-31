@@ -21,7 +21,7 @@ puts gpt3.complete(prompt: prompt)['choices'].first['text']
 
 ### TODO: others
 
-## L1: Using behavior patterns to interact with underlying neural networks
+## L1: Using behavior patterns to interact with neural networks
 
 ### With structured examples
 
@@ -43,25 +43,11 @@ puts result
 
 ### TODO: auto-detected behavior pattern from config
 
-## L2: Rails adapters
+## L2: Rails magic for neural networks
 
-This is the fun part!
+**This is the fun part!**
 
-### controller.rb
-
-```
-class MyBank < ActiveAI::Controller
-  def check_balance
-    # Make an API request to GET bank.com/balance
-  end
-
-  def transfer_money
-    # Make an API request to POST bank.com/transfer with params
-  end
-end
-```
-
-### routes.yml
+### config/routes/bank.yml
 
 ```
 instruction:
@@ -78,4 +64,18 @@ examples:
     Params: { beneficiaryId: 98765, amount: 245.0, reference: "Groceries <3" }
   - Match: What's my bank balance?
     To: bank#check_balance
+```
+
+### controllers/bank_controller.rb
+
+```
+class BankController < ActiveAI::Controller
+  def check_balance
+    # Make an API request to GET bank.com/balance and return some useful data
+  end
+
+  def transfer_money
+    # Make an API request to POST bank.com/transfer with params and return some useful data
+  end
+end
 ```

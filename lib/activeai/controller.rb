@@ -3,11 +3,10 @@ class ActiveAI::Controller
   class_attribute :router
 
   def self.inherited(base)
-    # routes_path = __FILE__.split('/')[0..-2].join('/') + "/routes.yml"
-    routes_path = "/Users/jeriko/Developer/thinkspawn/app/models/plugins/open_ai/routes.yml"
-    # TODO this is the wrong file, we need the actual inheritor somehow
-
+    # TODO I'm sure there's a proper way to do this but it works for now
+    routes_path = Rails.root.join('config', 'routes', base.to_s.underscore.gsub('_controller', '.yml'))
     routes_config = YAML::load(File.read(routes_path))
+    # convert routes_config params into JSON?
     router = ActiveAI::Router.new(routes_config, controller: base)
   end
 

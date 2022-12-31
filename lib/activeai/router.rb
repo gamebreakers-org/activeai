@@ -1,7 +1,7 @@
 class ActiveAI::Router
-  INSTRUCTION_ALL = 'For a given Match request, choose where to send it via the "To" field. If nothing matches, the "To" field should be None.'
-  UNMATCHED_ALL = { 'Match' => 'Create a NASA space program', 'To' => 'None' }
-  INSTRUCTION_INSTANCE = 'For a given Match request, choose where to send it via the "To" field. Also choose the params that fit best. If nothing matches, the "To" field should be None.'
+  INSTRUCTION_ALL = 'For a given Match request, choose where to send it via the "Route" field. If nothing matches, the "Route" field should be None.'
+  UNMATCHED_ALL = { 'Match' => 'Create a NASA space program', 'Route' => 'None' }
+  INSTRUCTION_INSTANCE = 'For a given Match request, choose where to send it via the "Route" field. Also choose the params that fit best. If nothing matches, the "Route" field should be None.'
 
   # TODO could load a "session" or "context" for current user which handles router registration and stuff
   # keeps it flexi for thinkspawn while not breaking things on this layer
@@ -14,9 +14,9 @@ class ActiveAI::Router
       'instruction' => INSTRUCTION_ALL,
       'examples' => routers.map do |router|
         router.config['examples'].select do |example|
-          example['To'] != 'None'
+          example['Route'] != 'None'
         end.map do |example|
-          example.slice('Match', 'To')
+          example.slice('Match', 'Route')
         end << UNMATCHED_ALL
       end.flatten
     })
@@ -41,7 +41,7 @@ class ActiveAI::Router
     @config = config
     @config['instruction'] ||= INSTRUCTION_INSTANCE
 
-    llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'text-curie-001')
+    llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'text-davinci-003', temperature: 0.2)
     @behavior = ActiveAI::Behavior::LLM::FollowStructuredExamples.new(llm, config)
 
     if controller
@@ -51,13 +51,16 @@ class ActiveAI::Router
   end
 
   def call(request)
-    routing = @behavior.call({ 'Request' => request }, extract: %W[To Params]) # TODO might not have params returned, will break?
+    puts "CALLING ON ROUTER #{@controller} for #{request}"
+    puts
 
-    controller_name, method_name = routing['To'].split('#')
+    routing = @behavior.call({ 'Request' => request }, extract: %W[Route Params]) # TODO might not have params returned, will break?
+    puts routing
+    controller_name, method_name = routing['Route'].split('#')
 
     if [controller_name, method_name].any?(&:blank?)
       # unmatched
-      nil
+      return nil
     else
       params = JSON.parse(routing['Params']) # TODO cast as JSON earlier? e.g. in config of the behavior?
       puts "Calling #{method_name} with params: #{params}." # but only if matched

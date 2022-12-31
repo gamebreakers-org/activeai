@@ -51,19 +51,19 @@ puts result
 
 ```
 instruction:
-  For a given Match request, choose where to send it via the "To" field and choose the params that fit best.
-  If nothing matches, the "To" field should be None.
+  For a given Match request, choose where to send it via the "Route" field and choose the params that fit best.
+  If nothing matches, the "Route" field should be None.
 examples:
   - Match: Check the weather
-    To: none
+    Route: none
   - Match: Send R100 to Jomiro
-    To: bank#transfer_money
+    Route: bank#transfer_money
     Params: { beneficiaryId: 12345, amount: 100.0 }
   - Match: Pay Mom R245 for groceries
-    To: bank#transfer_money
+    Route: bank#transfer_money
     Params: { beneficiaryId: 98765, amount: 245.0, reference: "Groceries <3" }
   - Match: What's my bank balance?
-    To: bank#check_balance
+    Route: bank#check_balance
 ```
 
 ### controllers/bank_controller.rb

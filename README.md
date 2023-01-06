@@ -47,6 +47,8 @@ puts result
 
 **This is the fun part!**
 
+Suppose you have the following files:
+
 ### config/routes/bank.yml
 
 ```
@@ -70,6 +72,9 @@ examples:
 
 ```
 class BankController < ActiveAI::Controller
+  auto_load_routing # loads routing config from config/routes/bank.yml
+  load_routing(config) # alternatively, loads routing config from a hash
+
   def check_balance
     # Make an API request to GET bank.com/balance and return some useful data
   end
@@ -79,3 +84,50 @@ class BankController < ActiveAI::Controller
   end
 end
 ```
+
+### How to use it
+
+#### Running a controller directly
+
+Using the routing yml file and an LLM, the controller will turn any text request into an action to run, with parameters to supply, and then execute it.
+
+```ruby
+controller = BankController.new
+controller.call("Pay Mom R127 for groceries")
+# => responds with the result of an action that ran with params
+```
+
+#### Routing an unknown request with multiple controllers
+
+It's possible to instantiate an `ActiveAI::Router`, load up the examples from multiple controllers, and then have it handle many types of requests. It does this in a similar way to how the controller uses an LLM to map to action and params, but it concatenates all controller routing examples and strips out the parameter preparation step for efficiency, since the controller handles this.
+
+```ruby
+router = ActiveAI::Router.new
+
+# load all auto-detected routes:
+router.auto_load_routing(Rails.root.join('config','routes')) # loads all .yml files as controller examples
+
+# or, load config via path or manually from a config hash:
+router.add_controller_routing_from_path(Rails.root.join("config", "routes", "bank.yml"))
+slack_routing = YAML::load(File.read(Rails.root.join("config", "routes", "slack.yml"))
+router.add_controller_routing(slack_routing)
+```
+
+Once the routes are loaded, requests will be passed to a matched controller, if any matches. You can match and run requests like this:
+
+```ruby
+router.call("Send a Slack message saying 'Hey everyone!") # returns the successful action
+router.call("Transfer R5,000 to savings") # returns the successful action
+router.call("Visit grandma") # returns nil
+```
+
+Or if you just want to find the controller:
+
+```ruby
+router.find_controller("Transfer money out of savings")
+# => BankController
+```
+
+# Please help make this better!
+
+This is an experiment to push the boundaries of "AI as compute" and it would be awesome to have more eager explorers to play with!

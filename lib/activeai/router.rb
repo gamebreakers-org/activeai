@@ -1,77 +1,63 @@
 class ActiveAI::Router
-  INSTRUCTION_ALL = 'For a given Match request, choose where to send it via the "Route" field. If nothing matches, the "Route" field should be None.'
-  UNMATCHED_ALL = { 'Match' => 'Create a NASA space program', 'Route' => 'None' }
-  INSTRUCTION_INSTANCE = 'For a given Match request, choose where to send it via the "Route" field. Also choose the params that fit best. If nothing matches, the "Route" field should be None.'
+  INSTRUCTION = 'For a given Match request, choose where to send it via the "Route" field. If nothing matches, the "Route" field should be None.'
+  UNMATCHED = { 'Match' => 'Create a NASA space program', 'Route' => 'None' }
 
-  # TODO could load a "session" or "context" for current user which handles router registration and stuff
-  # keeps it flexi for thinkspawn while not breaking things on this layer
-
-  class_attribute :routers
-  self.routers = []
-
-  def self.application_router # TODO use this
-    new({
-      'instruction' => INSTRUCTION_ALL,
-      'examples' => routers.map do |router|
-        router.config['examples'].select do |example|
-          example['Route'] != 'None'
-        end.map do |example|
-          example.slice('Match', 'Route')
-        end << UNMATCHED_ALL
-      end.flatten
-    })
+  def initialize
+    @routings = []
+    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'text-curie-001', temperature: 0.2)
   end
 
-  def self.call_all(request)
-    # this shouldn't be the thing, something just decides if it matches or not
-    # we actually ask a master router where to go, and then ask the specific router what the params are
-    # -- might hit the token limit though, so why not just do each one? less web requests? but infinite scale
+  def add_controller_routing(routing)
+    @routings << routing
+  end
 
-    routers.each do |router|
-      response = router.call(request)
-      return response if response
+  def add_controller_routing_from_path(path)
+    routing = YAML::load(File.read(path))
+    add_controller_routing(routing)
+  end
+
+  def auto_load_routing(folder)
+    paths = Dir[folder.join("**", "*.yml")]
+    paths.each do |path|
+      add_controller_routing_from_path(path)
     end
   end
 
-  attr_accessor :config
+  def behavior
+    config = {
+      'instruction' => INSTRUCTION,
+      'examples' => [UNMATCHED] + @routings.map do |routing|
+        routing['examples'].reject do |example|
+          example['Route'] == 'None'
+        end.map do |example|
+          example.slice('Match', 'Route')
+        end
+      end.flatten
+    }
 
-  def initialize(config, controller: nil)
-    self.class.routers ||= []
+    ActiveAI::Behavior::LLM::FollowStructuredExamples.new(@llm, config)
+  end
 
-    @config = config
-    @config['instruction'] ||= INSTRUCTION_INSTANCE
-
-    llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'text-davinci-003', temperature: 0.2)
-    @behavior = ActiveAI::Behavior::LLM::FollowStructuredExamples.new(llm, config)
-
-    if controller
-      self.class.routers << self
-      @controller = controller.new
+  def find_controller(request)
+    # should return constantized maybe?
+    routing = behavior.call({ 'Request' => request }, extract: %W[Route])
+    controller_name, action_name = routing['Route'].split('#')
+    
+    if controller_name == "None" || action_name.blank?
+      return nil
+    else
+      return (controller_name + "_controller").classify.constantize
+      # TODO need protection (somewhere) from using controllers that aren't allowed
+      # maybe router has a whitelist? since we're taking user input
+      # idk problem for later not now
     end
   end
 
   def call(request)
-    puts "CALLING ON ROUTER #{@controller} for #{request}"
-    puts
-
-    routing = @behavior.call({ 'Request' => request }, extract: %W[Route Params]) # TODO might not have params returned, will break?
-    puts routing
-    controller_name, method_name = routing['Route'].split('#')
-
-    if [controller_name, method_name].any?(&:blank?)
-      # unmatched
-      return nil
+    if controller = find_controller(request)
+      controller.new.call(request)
     else
-      params = JSON.parse(routing['Params']) # TODO cast as JSON earlier? e.g. in config of the behavior?
-      puts "Calling #{method_name} with params: #{params}." # but only if matched
-
-      if @controller.is_a?(ActiveAI::Controller)
-        return @controller.call(method_name, params)
-      else
-        # it could be a dynamic user-generated script or something to call out to somehow
-        # TODO later later
-        return true
-      end
+      return nil
     end
   end
 end

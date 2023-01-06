@@ -3,7 +3,7 @@
 ## What I did
 
 - Fix active_ai/controller.rb to reflect on the correct detected path name
-- Ran a full test with thinkspawn creating DALLE art - it's really cool!
+- Ran a full test with thinkspawn creating DALLE art and sending Slack messages - it's really cool!
 - Released v0.1.1!!
 
 ## What I learned
@@ -16,6 +16,8 @@
 - add whisper as a neural network via replicate.com
 - add embeddings as a concept - not sure what/how yet
 - make better examples for routing, it's a bit iffy right now
+- add a better way in code to test controllers test cases etc.
+- test out if the code models work better than the text ones
 
 # 30 December 2022
 

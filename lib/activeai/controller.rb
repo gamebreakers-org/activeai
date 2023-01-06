@@ -9,20 +9,33 @@ class ActiveAI::Controller
   end
 
   def self.load_routing(routes_config)
-    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'text-curie-001', temperature: 0.2)
-    self.routing_behavior = ActiveAI::Behavior::LLM::FollowStructuredExamples.new(@llm, routes_config)
+    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'code-davinci-002', temperature: 0.2)
+
+    examples = ActiveAI.route_examples_to_function_call_examples(routes_config['examples'])
+    self.routing_behavior = ActiveAI::Behavior::LLM::WriteFunctionCall.new(@llm, { examples: examples })
   end
 
   attr_accessor :params
 
   def prepare_action(request)
-    routing = self.class.routing_behavior.call({ 'Request' => request }, extract: %W[Route Params])
-    controller_name, action_name = routing['Route'].split('#')
+    # samples to parse:
+    #   plugins.slack.send_message({ \"channel\": \"#general\", \"text\": \"Hi\" })
+    #   unmatched()
+
+    function = self.class.routing_behavior.call(request)
+    *controller_path, action_name = function[:path].split(".")
+    controller_name = controller_path.join("/").presence
+
     # TODO verify it's the right controller and the action name exists and it's not a reserved / internal thing
-    return {
-      action: action_name,
-      params: JSON.parse(routing['Params']) # TODO cast as JSON earlier? e.g. in config of the behavior? 
-    }
+
+    if controller_name.present?
+      return {
+        action: action_name,
+        params: function[:params]
+      }
+    else
+      return nil
+    end
   end
 
   def call(request)

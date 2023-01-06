@@ -16,5 +16,17 @@ module ActiveAI
     }
   end
 
+  def self.route_examples_to_function_call_examples(examples)
+    examples.map do |example|
+      function = example['Route'].gsub('/','.').gsub('#','.')
+      function = "unmatched" if function == "None"
+      
+      {
+        description: example['Match'],
+        code: "#{function}(#{example['Params']&.strip})"
+      }
+    end
+  end
+
 end
 

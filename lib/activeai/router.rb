@@ -4,7 +4,7 @@ class ActiveAI::Router
 
   def initialize
     @routings = []
-    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'text-curie-001', temperature: 0.2)
+    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'code-davinci-002', temperature: 0.2)
   end
 
   def add_controller_routing(routing)
@@ -24,26 +24,42 @@ class ActiveAI::Router
   end
 
   def behavior
-    config = {
-      'instruction' => INSTRUCTION,
-      'examples' => [UNMATCHED] + @routings.map do |routing|
-        routing['examples'].reject do |example|
-          example['Route'] == 'None'
-        end.map do |example|
-          example.slice('Match', 'Route')
-        end
-      end.flatten
-    }
+    raw_examples = [UNMATCHED] + @routings.map do |routing|
+      routing['examples'].reject do |example|
+        example['Route'] == 'None'
+      end.map do |example|
+        example.slice('Match', 'Route')
+      end
+    end.flatten
+    examples = ActiveAI.route_examples_to_function_call_examples(raw_examples)
 
-    ActiveAI::Behavior::LLM::FollowStructuredExamples.new(@llm, config)
+    ActiveAI::Behavior::LLM::WriteFunctionCall.new(@llm, { examples: examples })
   end
 
+  # def behavior_via_structured_examples
+  #   config = {
+  #     'instruction' => INSTRUCTION,
+  #     'examples' => [UNMATCHED] + @routings.map do |routing|
+  #       routing['examples'].reject do |example|
+  #         example['Route'] == 'None'
+  #       end.map do |example|
+  #         example.slice('Match', 'Route')
+  #       end
+  #     end.flatten
+  #   }
+
+  #   ActiveAI::Behavior::LLM::FollowStructuredExamples.new(@llm, config)
+  # end
+
   def find_controller(request)
-    # should return constantized maybe?
-    routing = behavior.call({ 'Request' => request }, extract: %W[Route])
-    controller_name, action_name = routing['Route'].split('#')
+    function = behavior.call(request) # TODO maybe the behavior should return function and params as well. seems right
     
-    if controller_name == "None" || action_name.blank?
+    *controller_path, action_name = function[:path].split(".")
+    controller_name = controller_path.join("/").presence
+
+    # TODO verify it's the right controller and the action name exists and it's not a reserved / internal thing
+
+    if controller_name.blank? || action_name.blank? || action_name == 'unmatched'
       return nil
     else
       return (controller_name + "_controller").classify.constantize

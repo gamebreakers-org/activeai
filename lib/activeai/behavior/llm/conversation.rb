@@ -20,7 +20,7 @@ class ActiveAI::Behavior::LLM::Conversation < ActiveAI::Behavior::LLM
         # TODO use the label key they provide in the yml file
       end,
       "Conversation:\n" + @state['conversation']
-    ].join(SEPARATOR)
+    ].join(LINE_SEPARATOR)
   end
 
   def add(speaker, message)

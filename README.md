@@ -39,6 +39,12 @@ puts result
 #=> 'tomatoes, jam'
 ```
 
+### Behavior: WriteFunctionCall
+
+#### TODO
+
+This lets you use `code-davinci-002` or `code-cushman-001` to run logic. The router uses this internally. Supply a list of example pairs that are a "description" and "code", and then you can complete another one.
+
 ### TODO: with other patterns
 
 ### TODO: auto-detected behavior pattern from config

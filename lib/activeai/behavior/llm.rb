@@ -7,7 +7,7 @@ class ActiveAI::Behavior::LLM < ActiveAI::Behavior::Base
     @llm.complete(prompt: prompt, stop: stop)
   end
 
-  SEPARATOR = "\n\n###\n\n"
+  LINE_SEPARATOR = "\n\n###\n\n"
 
   def extract_keys(completion, extract)
     matcher_string = extract.map{ |key| "#{key}:(.*)" }.join
@@ -25,5 +25,6 @@ class ActiveAI::Behavior::LLM < ActiveAI::Behavior::Base
 end
 
 require_relative "llm/conversation"
-require_relative "llm/unstructured"
 require_relative "llm/follow_structured_examples"
+require_relative "llm/unstructured"
+require_relative "llm/write_function_call"

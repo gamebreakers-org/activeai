@@ -15,12 +15,12 @@ class ActiveAI::Behavior::LLM::FollowStructuredExamples < ActiveAI::Behavior::LL
         example.map do |key, value|
           "#{key}: #{value}"
         end.join("\n")
-      end.join(SEPARATOR)
-    ].join(SEPARATOR)
+      end.join(LINE_SEPARATOR)
+    ].join(LINE_SEPARATOR)
   end
 
   def call(input={}, extract: []) # TODO cool splat stuff?
-    prompt = base_prompt + SEPARATOR
+    prompt = base_prompt + LINE_SEPARATOR
 
     prompt += input.map do |key, value|
       "#{key}: #{value}"

@@ -9,13 +9,17 @@ class ActiveAI::Controller
   end
 
   def self.load_routing(routes_config)
-    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'code-davinci-002', temperature: 0.2)
+    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'code-cushman-001', temperature: 0)
 
     examples = ActiveAI.route_examples_to_function_call_examples(routes_config['examples'])
     self.routing_behavior = ActiveAI::Behavior::LLM::WriteFunctionCall.new(@llm, { examples: examples })
   end
 
   attr_accessor :params
+
+  def initialize(provider)
+    @provider = provider
+  end
 
   def prepare_action(request)
     # samples to parse:

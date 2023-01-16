@@ -4,7 +4,7 @@ class ActiveAI::Router
 
   def initialize
     @routings = []
-    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'code-davinci-002', temperature: 0.2)
+    @llm = ActiveAI::NeuralNetwork::GPT3.new(ActiveAI.config[:gpt3_token], model: 'code-cushman-001', temperature: 0)
   end
 
   def add_controller_routing(routing)
@@ -69,11 +69,18 @@ class ActiveAI::Router
     end
   end
 
-  def call(request)
-    if controller = find_controller(request)
-      controller.new.call(request)
-    else
-      return nil
-    end
-  end
+  # This stopped being necessary, because we find controller and call it elsewhere:
+  # def call(request, providers=nil)
+  #   if controller = find_controller(request)
+
+  #     provider = if providers.respond_to?(:find_by)
+  #       provider_name = controller.to_s.gsub("Plugins::", "").gsub("Controller","")
+  #       providers.find_by(name: provider_name)
+  #     end
+
+  #     controller.new(provider).call(request)
+  #   else
+  #     return nil
+  #   end
+  # end
 end

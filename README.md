@@ -108,7 +108,7 @@ controller.call("Pay Mom R127 for groceries")
 It's possible to instantiate an `ActiveAI::Router`, load up the examples from multiple controllers, and then have it handle many types of requests. It does this in a similar way to how the controller uses an LLM to map to action and params, but it concatenates all controller routing examples and strips out the parameter preparation step for efficiency, since the controller handles this.
 
 ```ruby
-router = ActiveAI::Router.new
+router = ActiveAI::Router.new # TODO you need to add providers now.. should be optional?
 
 # load all auto-detected routes:
 router.auto_load_routing(Rails.root.join('config','routes')) # loads all .yml files as controller examples

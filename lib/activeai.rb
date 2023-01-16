@@ -1,12 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "activeai/behavior"
-require_relative "activeai/configuration"
-require_relative "activeai/controller"
-require_relative "activeai/neural_network"
-require_relative "activeai/router"
-require_relative "activeai/version"
-
 module ActiveAI
   class Error < StandardError; end
   
@@ -30,3 +23,9 @@ module ActiveAI
 
 end
 
+require_relative "activeai/behavior"
+require_relative "activeai/configuration"
+require_relative "activeai/controller"
+require_relative "activeai/neural_network"
+require_relative "activeai/router"
+require_relative "activeai/version"
